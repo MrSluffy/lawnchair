@@ -1,25 +1,21 @@
 package com.android.launcher3;
 
-import static com.android.launcher3.ResourceUtils.INVALID_RESOURCE_HANDLE;
 import static com.android.launcher3.config.FeatureFlags.SEPARATE_RECENTS_ACTIVITY;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Insets;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.ViewDebug;
 import android.view.WindowInsets;
 
-import androidx.annotation.RequiresApi;
-
 import com.android.launcher3.graphics.SysUiScrim;
 import com.android.launcher3.statemanager.StatefulActivity;
 import com.android.launcher3.uioverrides.ApiWrapper;
 import com.patrykmichalik.opto.core.PreferenceExtensionsKt;
+import com.android.launcher3.util.window.WindowManagerProxy;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +30,7 @@ public class LauncherRootView extends InsettableFrameLayout {
     private final StatefulActivity mActivity;
 
     @ViewDebug.ExportedProperty(category = "launcher")
-    private static final List<Rect> SYSTEM_GESTURE_EXCLUSION_RECT =
-            Collections.singletonList(new Rect());
+    private static final List<Rect> SYSTEM_GESTURE_EXCLUSION_RECT = Collections.singletonList(new Rect());
 
     private WindowStateListener mWindowStateListener;
     @ViewDebug.ExportedProperty(category = "launcher")
@@ -67,31 +62,30 @@ public class LauncherRootView extends InsettableFrameLayout {
 
     @Override
     public WindowInsets onApplyWindowInsets(WindowInsets insets) {
-        if (Utilities.ATLEAST_R) {
-            insets = updateInsetsDueToTaskbar(insets);
-            Insets systemWindowInsets = insets.getInsetsIgnoringVisibility(
-                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-            mTempRect.set(systemWindowInsets.left, systemWindowInsets.top, systemWindowInsets.right,
-                    systemWindowInsets.bottom);
-        } else {
-            mTempRect.set(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
-                    insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
-        }
+        mActivity.handleConfigurationChanged(mActivity.getResources().getConfiguration());
+
+        insets = WindowManagerProxy.INSTANCE.get(getContext())
+                .normalizeWindowInsets(getContext(), insets, mTempRect);
         handleSystemWindowInsets(mTempRect);
         computeGestureExclusionRect();
         return insets;
     }
 
+    <<<<<<<HEAD
     /**
-     * Taskbar provides nav bar and tappable insets. However, taskbar is not attached immediately,
-     * and can be destroyed and recreated. Thus, instead of relying on taskbar being present to
-     * get its insets, we calculate them ourselves so they are stable regardless of whether taskbar
+     * Taskbar provides nav bar and tappable insets. However, taskbar is not
+     * attached immediately,
+     * and can be destroyed and recreated. Thus, instead of relying on taskbar being
+     * present to
+     * get its insets, we calculate them ourselves so they are stable regardless of
+     * whether taskbar
      * is currently attached.
      *
      * @param oldInsets The system-provided insets, which we are modifying.
      * @return The updated insets.
      */
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api=Build.VERSION_CODES.R)
+
     private WindowInsets updateInsetsDueToTaskbar(WindowInsets oldInsets) {
         if (!ApiWrapper.TASKBAR_DRAWN_IN_PROCESS || !LawnchairApp.isRecentsEnabled()) {
             // 3P launchers based on Launcher3 should still be inset like normal.
@@ -139,9 +133,12 @@ public class LauncherRootView extends InsettableFrameLayout {
         return updatedInsetsBuilder.build();
     }
 
+    =======>>>>>>>aosp-13
+
     @Override
     public void setInsets(Rect insets) {
-        // If the insets haven't changed, this is a no-op. Avoid unnecessary layout caused by
+        // If the insets haven't changed, this is a no-op. Avoid unnecessary layout
+        // caused by
         // modifying child layout params.
         if (!insets.equals(mInsets)) {
             super.setInsets(insets);

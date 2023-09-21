@@ -26,14 +26,13 @@ import android.view.View;
 import android.view.ViewRootImpl;
 
 import com.android.quickstep.RemoteAnimationTargets.ReleaseCheck;
-import com.android.systemui.shared.system.SyncRtSurfaceTransactionApplierCompat.SurfaceParams;
 
 import java.util.function.Consumer;
 
-
 /**
- * Helper class to apply surface transactions in sync with RenderThread similar to
- *   android.view.SyncRtSurfaceTransactionApplier
+ * Helper class to apply surface transactions in sync with RenderThread similar
+ * to
+ * android.view.SyncRtSurfaceTransactionApplier
  * with some Launcher specific utility methods
  */
 @TargetApi(Build.VERSION_CODES.R)
@@ -48,12 +47,14 @@ public class SurfaceTransactionApplier extends ReleaseCheck {
     private int mLastSequenceNumber = 0;
 
     /**
-     * @param targetView The view in the surface that acts as synchronization anchor.
+     * @param targetView The view in the surface that acts as synchronization
+     *                   anchor.
      */
     public SurfaceTransactionApplier(View targetView) {
         mTargetViewRootImpl = targetView.getViewRootImpl();
         mBarrierSurfaceControl = mTargetViewRootImpl.getSurfaceControl();
         mApplyHandler = new Handler(this::onApplyMessage);
+        setCanRelease(true);
     }
 
     protected boolean onApplyMessage(Message msg) {
@@ -70,11 +71,12 @@ public class SurfaceTransactionApplier extends ReleaseCheck {
      * @param params The surface parameters to apply. DO NOT MODIFY the list after passing into
      *               this method to avoid synchronization issues.
      */
-    public void scheduleApply(final SurfaceParams... params) {
+    public void scheduleApply(SurfaceTransaction params) {
         View view = mTargetViewRootImpl.getView();
         if (view == null) {
             return;
         }
+        Transaction t = params.getTransaction();
 
         mLastSequenceNumber++;
         final int toApplySeqNo = mLastSequenceNumber;
@@ -98,6 +100,9 @@ public class SurfaceTransactionApplier extends ReleaseCheck {
                 Message.obtain(mApplyHandler, MSG_UPDATE_SEQUENCE_NUMBER, toApplySeqNo, 0)
                         .sendToTarget();
             }
+            mTargetViewRootImpl.mergeWithNextTransaction(t, frame);
+            Message.obtain(mApplyHandler, MSG_UPDATE_SEQUENCE_NUMBER, toApplySeqNo, 0)
+                    .sendToTarget();
         });
 
         // Make sure a frame gets scheduled.
@@ -105,7 +110,8 @@ public class SurfaceTransactionApplier extends ReleaseCheck {
     }
 
     /**
-     * Creates an instance of SyncRtSurfaceTransactionApplier, deferring until the target view is
+     * Creates an instance of SurfaceTransactionApplier, deferring until the target
+     * view is
      * attached if necessary.
      */
     public static void create(

@@ -21,6 +21,7 @@ import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.EXIT_INDE
 import static com.android.launcher3.folder.ClippedFolderIconLayoutRule.MAX_NUM_ITEMS_IN_PREVIEW;
 import static com.android.launcher3.folder.FolderIcon.DROP_IN_ANIMATION_DURATION;
 import static com.android.launcher3.graphics.PreloadIconDrawable.newPendingIcon;
+import static com.android.launcher3.icons.BitmapInfo.FLAG_THEMED;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -77,6 +78,8 @@ public class PreviewItemManager {
     private int mTotalWidth = -1;
     private int mPrevTopPadding = -1;
     private Drawable mReferenceDrawable = null;
+
+    private int mNumOfPrevItems = 0;
 
     // These hold the first page preview items
     private ArrayList<PreviewItemDrawingParams> mFirstPageParams = new ArrayList<>();
@@ -253,7 +256,6 @@ public class PreviewItemManager {
 
     void buildParamsForPage(int page, ArrayList<PreviewItemDrawingParams> params, boolean animate) {
         List<WorkspaceItemInfo> items = mIcon.getPreviewItemsOnPage(page);
-        int prevNumItems = params.size();
 
         // We adjust the size of the list to match the number of items in the preview.
         while (items.size() < params.size()) {
@@ -277,8 +279,9 @@ public class PreviewItemManager {
                     mReferenceDrawable = p.drawable;
                 }
             } else {
-                FolderPreviewItemAnim anim = new FolderPreviewItemAnim(this, p, i, prevNumItems, i,
-                        numItemsInFirstPagePreview, DROP_IN_ANIMATION_DURATION, null);
+                FolderPreviewItemAnim anim = new FolderPreviewItemAnim(this, p, i,
+                        mNumOfPrevItems, i, numItemsInFirstPagePreview, DROP_IN_ANIMATION_DURATION,
+                        null);
 
                 if (p.anim != null) {
                     if (p.anim.hasEqualFinalState(anim)) {
@@ -317,7 +320,9 @@ public class PreviewItemManager {
     }
 
     void updatePreviewItems(boolean animate) {
+        int numOfPrevItemsAux = mFirstPageParams.size();
         buildParamsForPage(0, mFirstPageParams, animate);
+        mNumOfPrevItems = numOfPrevItemsAux;
     }
 
     void updatePreviewItems(Predicate<WorkspaceItemInfo> itemCheck) {
@@ -429,7 +434,7 @@ public class PreviewItemManager {
             drawable.setLevel(item.getProgressLevel());
             p.drawable = drawable;
         } else {
-            p.drawable = item.newIcon(mContext, true);
+            p.drawable = item.newIcon(mContext, FLAG_THEMED);
         }
         p.drawable.setBounds(0, 0, mIconSize, mIconSize);
         p.item = item;

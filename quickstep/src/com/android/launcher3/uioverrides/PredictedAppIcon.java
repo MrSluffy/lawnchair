@@ -16,6 +16,8 @@
 package com.android.launcher3.uioverrides;
 
 import static com.android.launcher3.anim.Interpolators.ACCEL_DEACCEL;
+import static com.android.launcher3.icons.BitmapInfo.FLAG_THEMED;
+import static com.android.launcher3.icons.FastBitmapDrawable.getDisabledColorFilter;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -48,10 +50,12 @@ import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherSettings;
 import com.android.launcher3.R;
 import com.android.launcher3.anim.AnimatorListeners;
+import com.android.launcher3.celllayout.CellLayoutLayoutParams;
 import com.android.launcher3.icons.BitmapInfo;
 import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.icons.IconNormalizer;
 import com.android.launcher3.icons.LauncherIcons;
+import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.touch.ItemClickHandler;
 import com.android.launcher3.touch.ItemLongClickListener;
@@ -122,7 +126,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
         int shadowSize = context.getResources().getDimensionPixelSize(
                 R.dimen.blur_size_thin_outline);
         mShadowFilter = new BlurMaskFilter(shadowSize, BlurMaskFilter.Blur.OUTER);
-        mShapePath = GraphicsUtils.getShapePath(mNormalizedIconSize);
+        mShapePath = GraphicsUtils.getShapePath(context, mNormalizedIconSize);
     }
 
     @Override
@@ -179,7 +183,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
                 : null;
         super.applyFromWorkspaceItem(info, animate, staggerIndex);
         int oldPlateColor = mPlateColor;
-        int newPlateColor = ColorUtils.setAlphaComponent(mDotParams.color, 200);
+        int newPlateColor = ColorUtils.setAlphaComponent(mDotParams.appColor, 200);
         if (!animate) {
             mPlateColor = newPlateColor;
         }
@@ -236,7 +240,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
         mSlotMachineIcons = new ArrayList<>(iconsToAnimate.size() + 2);
         mSlotMachineIcons.add(getIcon());
         iconsToAnimate.stream()
-                .map(iconInfo -> iconInfo.newThemedIcon(mContext))
+                .map(iconInfo -> iconInfo.newIcon(mContext, FLAG_THEMED))
                 .forEach(mSlotMachineIcons::add);
         if (endWithOriginalIcon) {
             mSlotMachineIcons.add(getIcon());
@@ -270,7 +274,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
         mIsPinned = true;
         applyFromWorkspaceItem(info);
         setOnLongClickListener(ItemLongClickListener.INSTANCE_WORKSPACE);
-        ((CellLayout.LayoutParams) getLayoutParams()).canReorder = true;
+        ((CellLayoutLayoutParams) getLayoutParams()).canReorder = true;
         invalidate();
     }
 
@@ -279,7 +283,7 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
      */
     public void finishBinding(OnLongClickListener longClickListener) {
         setOnLongClickListener(longClickListener);
-        ((CellLayout.LayoutParams) getLayoutParams()).canReorder = false;
+        ((CellLayoutLayoutParams) getLayoutParams()).canReorder = false;
         setTextVisibility(false);
         verifyHighRes();
     }
@@ -356,6 +360,19 @@ public class PredictedAppIcon extends DoubleShadowBubbleTextView {
         mIconRingPaint.setColor(mPlateColor);
         mIconRingPaint.setMaskFilter(null);
         canvas.drawPath(mRingPath, mIconRingPaint);
+    }
+
+    @Override
+    public void setIconDisabled(boolean isDisabled) {
+        super.setIconDisabled(isDisabled);
+        mIconRingPaint.setColorFilter(isDisabled ? getDisabledColorFilter() : null);
+        invalidate();
+    }
+
+    @Override
+    protected void setItemInfo(ItemInfoWithIcon itemInfo) {
+        super.setItemInfo(itemInfo);
+        setIconDisabled(itemInfo.isDisabled());
     }
 
     @Override
