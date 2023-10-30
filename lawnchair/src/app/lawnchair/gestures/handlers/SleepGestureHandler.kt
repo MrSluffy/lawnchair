@@ -39,6 +39,7 @@ import app.lawnchair.LawnchairLauncher
 import app.lawnchair.lawnchairApp
 import app.lawnchair.root.RootHelperManager
 import app.lawnchair.ui.AlertBottomSheetContent
+import app.lawnchair.root.ExecuteAsRootBase
 import app.lawnchair.util.requireSystemService
 import app.lawnchair.views.ComposeBottomSheet
 import com.android.launcher3.R
@@ -65,10 +66,17 @@ class SleepGestureHandler(context: Context) : GestureHandler(context) {
 class SleepMethodRoot(context: Context) : SleepGestureHandler.SleepMethod(context) {
     private val rootHelperManager = RootHelperManager.INSTANCE.get(context)
 
-    override suspend fun isSupported() = rootHelperManager.isAvailable()
+    override suspend fun isSupported() = true
 
     override suspend fun sleep(launcher: LawnchairLauncher) {
-        rootHelperManager.getService().goToSleep()
+        if (!ExecuteAsRootBase.canRunRootCommands()) {
+            ExecuteAsRootBase.execute("su")
+        }
+        ExecuteAsRootBase.execute("input keyevent 26")
+            .runCatching{
+            rootHelperManager.getService().goToSleep()
+        }
+
     }
 }
 
