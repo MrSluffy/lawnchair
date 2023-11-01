@@ -38,7 +38,7 @@ project(':searchuilib').projectDir = new File(rootDir, 'platform_frameworks_libs
 
 include ':systemUIShared'
 include ':systemUIAnim'
-include ':lawnWithQuickstepDebug', ':systemUIUnFold'
+include ':systemUIUnFold'
 include ':systemUIViewCapture'
 include ':compatLib'
 include ':compatLibVR'
